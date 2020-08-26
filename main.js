@@ -34,13 +34,6 @@ function initialize(){
                 imgsPath.forEach(imgPath => {
                     console.log(imgPath) 
                     imgPathList.push(path.join(imgFolderPath, imgPath))
-                    /*fs.readFile(path.join(imgFolderPath, imgPath), (err, data) => { //read file into list
-                        if (err)
-                            console.log(err) //Logs read file error
-                        else
-                            imgList.push(data) 
-                            console.log("read " + imgPath + " and appended to list")
-                    })*/
                 })
             }
         })
