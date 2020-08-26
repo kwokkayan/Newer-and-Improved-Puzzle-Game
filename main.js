@@ -1,16 +1,19 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const fs = require('fs')
 
 let mainWindow = null
-function initialize(){
-    let imgList = new Array()
+let imgPathList = new Array()
 
+function initialize(){
     function initializeWindow(){ // To initialize window and load html
         //TODO: add config and stuff
         mainWindow = new BrowserWindow({ 
             width : 600,
-            height : 400
+            height : 400,
+            webPreferences: { //don't know what this does
+                nodeIntegration: true, 
+            }
         })
         //TODO: change to index.html + add event listeners (need to look into)
         const indexPath = path.join("file://", __dirname, "index.html")
@@ -30,13 +33,14 @@ function initialize(){
                 console.log("\nAll images:") //Logs files
                 imgsPath.forEach(imgPath => {
                     console.log(imgPath) 
-                    fs.readFile(path.join(imgFolderPath, imgPath), (err, data) => { //read file into list
+                    imgPathList.push(path.join(imgFolderPath, imgPath))
+                    /*fs.readFile(path.join(imgFolderPath, imgPath), (err, data) => { //read file into list
                         if (err)
                             console.log(err) //Logs read file error
                         else
                             imgList.push(data) 
                             console.log("read " + imgPath + " and appended to list")
-                    })
+                    })*/
                 })
             }
         })
@@ -47,3 +51,11 @@ function initialize(){
 }
 
 initialize()
+
+ipcMain.on("genPuzzle", (event, confirmation) => { //generates puzzle and waits for completion
+    console.log(confirmation)
+    //TODO: ask for inputs
+    event.reply("puzzleArgs", imgPathList[0], 2) //sends args for gen puzzle
+})
+
+//generatePuzzle(imgPathList[0], 2)
