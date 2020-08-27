@@ -9,22 +9,23 @@ function initialize(){
     function initializeWindow(){ // To initialize window and load html
         //TODO: add config and stuff
         mainWindow = new BrowserWindow({ 
-            width : 600,
-            height : 400,
+            width : 480,
+            height : 720,
             webPreferences: { //don't know what this does
                 nodeIntegration: true, 
             }
         })
         //TODO: change to index.html + add event listeners (need to look into)
-        const indexPath = path.join("file://", __dirname, "index.html")
-        mainWindow.loadURL(indexPath)
+        const menuPath = path.join("file://", __dirname, "htmldocs/menu.html") 
+        const puzzlePath = path.join("file://", __dirname, "htmldocs/puzzle.html")
+        mainWindow.loadURL(puzzlePath)
         mainWindow.once('responsive', () => {
             mainWindow.show()
         })
-        mainWindow.webContents.openDevTools()
+        //mainWindow.webContents.openDevTools()
     }
     
-    function readImg(){ // To read all source images available
+    function readImgPaths(){ // To read all source images available
         const imgFolderPath = path.join("data/srcImg") //Shouldn't it be ("file://", __dirname, "data/srcImg") ?
         fs.readdir(imgFolderPath, (err, imgsPath) => {
             if (err)
@@ -32,19 +33,22 @@ function initialize(){
             else{
                 console.log("\nAll images:") //Logs files
                 imgsPath.forEach(imgPath => {
-                    console.log(imgPath) 
-                    imgPathList.push(path.join(imgFolderPath, imgPath))
+                    console.log(path.join("../", imgFolderPath, imgPath)) 
+                    imgPathList.push(path.join("../", imgFolderPath, imgPath))
                 })
             }
         })
     }
 
-    readImg()
+    readImgPaths()
     app.whenReady().then(initializeWindow)
 }
 
 initialize()
-
+ipcMain.on("showMenu", (event, confirmation) => {
+    console.log(confirmation)
+    event.replay("menuArgs", imgPathList)
+})
 ipcMain.on("genPuzzle", (event, confirmation) => { //generates puzzle and waits for completion
     console.log(confirmation)
     //TODO: ask for inputs

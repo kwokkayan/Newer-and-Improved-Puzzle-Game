@@ -20,7 +20,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
     canvas.height = CANVAS_MAX_HEIGHT + CANVAS_Y_OFFSET * 4
 
     //const OUTLINE_WIDTH = 3
-    const OUTLINE_COLOR = "rgb(255, 255, 255)"
+    const OUTLINE_COLOR = "rgb(0, 0, 0)"
     const BACKGROUND_COLOR = "rgb(0, 255, 255)"
     
     const EMPTY_SPACE_COLOR_UNSELECTED = "rgb(255, 255, 0)"
@@ -42,7 +42,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 piecesList.push({
                     sourceX: col * srcImgCellWidth,
                     sourceY: row * srcImgCellHeight,
-                    id: row * 5 + col,
+                    id: row * length + col,
                     hasSelected: false,
                     isEmptySpace: false
                     //puzzleBoardX: col * cellWidth,
@@ -63,8 +63,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
         })
         //console.log(piecesList) 
         function drawPuzzle() {
-            ctx.fillStyle = BACKGROUND_COLOR
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            drawBg()
 
             var xOffset = 5 //initialize some values
             var yOffset = 5
@@ -75,11 +74,11 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 if (row == 0)
                     yOffset = 0
                 else
-                    yOffset = 5 * row
+                    yOffset = length * row
                 if (col == 0)
                     xOffset = 0
                 else
-                    xOffset = 5 * col
+                    xOffset = length * col
 
                 piece.puzzleBoardX = col * CELLWIDTH + xOffset + CANVAS_X_OFFSET
                 piece.puzzleBoardY = row * CELLHEIGHT + yOffset + CANVAS_Y_OFFSET
@@ -99,14 +98,15 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
         }
         drawPuzzle()
         //drawEmptySpace(col * CELLWIDTH + xOffset + 5 + CANVAS_X_OFFSET, row * CELLHEIGHT + yOffset + CANVAS_Y_OFFSET, CELLWIDTH, CELLHEIGHT) // +5 to update offset
+
         console.log(piecesList)
+        canvas.addEventListener("mousedown", gameLogic)
 
-        //TODO: add mouse click event and game logic
-
-        canvas.addEventListener("mousedown", (event) => { //BUG: should be only adjacent to empty space can be chosen, cannot find valid empty space
+        function gameLogic(event){
             var mouseX = event.clientX
             var mouseY = event.clientY
             var hasAnyConditionMet = false
+            var redrawPuzzle = false
 
             var selectedId = piecesList.findIndex(piece => piece.hasSelected)
             var hasSelectedAnyPieces = false
@@ -114,17 +114,12 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 hasSelectedAnyPieces = true
             var emptySpaceIndex = piecesList.findIndex(piece => piece.isEmptySpace)
 
-            //console.log(hasSelectedAnyPieces)
-            //console.log(selectedId)
-            //console.log(emptySpaceIndex)
-
             for (var i = 0; i < piecesList.length; i++) {
-                //Check for adjacent empty space
+                //Checks for adjacent empty space
                 let hasAdjacentEmptySpace = false
                 let adjacentIndices = [i - length, i + length, i - 1, i + 1] //up, down, left, right
                 for (var j = 0; j < adjacentIndices.length; j++) {
                     if (adjacentIndices[j] == emptySpaceIndex) {
-                        console.log(adjacentIndices)
                         hasAdjacentEmptySpace = true
                         break
                     }
@@ -137,27 +132,17 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                         console.log("found valid empty space")
                         piecesList[selectedId].hasSelected = false
 
-                        //TODO: revert to unselected state + swap
-                        //with (piecesList[selectedId])
-                            //rawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
-                        //console.log(piecesList[i])
-                        //console.log(piecesList[selectedId])
+                        let t = piecesList[i]                   //
+                        piecesList[i] = piecesList[selectedId]  // swaps the selected piece with the empty space
+                        piecesList[selectedId] = t              //
 
-                        let t = piecesList[i]
-                        piecesList[i] = piecesList[selectedId]
-                        piecesList[selectedId] = t
-
-                        //console.log(piecesList[i])
-                        //console.log(piecesList[selectedId])
-                        
-                        drawPuzzle() //redraw puzzle
+                        redrawPuzzle = true //redraw puzzle
                         hasAnyConditionMet = true
                     } else if ((mouseY >= puzzleBoardY && mouseY <= puzzleBoardY + CELLHEIGHT) && (mouseX >= puzzleBoardX && mouseX <= puzzleBoardX + CELLWIDTH)) { //check if selected this piece (not empty space)             
                         if (!hasSelectedAnyPieces) {
                             console.log("selected box")
                             hasSelected = true //set Selected to true
 
-                            //TODO: change to selected state
                             drawOutLine(puzzleBoardX, puzzleBoardY, OUTLINE_COLOR)
                             with (piecesList[emptySpaceIndex])
                                 drawEmptySpace(puzzleBoardX, puzzleBoardY, EMPTY_SPACE_COLOR_SELECTED)
@@ -165,11 +150,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                         } else {
                             console.log("unselected box1")
                             piecesList[selectedId].hasSelected = false
-
-                            //TODO: revert to unselected state
-                            with (piecesList[selectedId])
-                                drawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
-                            //selectedId = -1
+                            redrawPuzzle = true //lazy
                         }
                         hasAnyConditionMet = true
                     }
@@ -180,10 +161,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
             if (!hasAnyConditionMet && hasSelectedAnyPieces) {
                 console.log("unselected box2")
                 piecesList[selectedId].hasSelected = false
-
-                //TODO: revert to unselected state
-                with (piecesList[selectedId])
-                    drawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
+                redrawPuzzle = true //lazy
             }
 
             //TODO: Check if finished puzzle
@@ -195,15 +173,25 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 }
 
             //TODO: win screen and reset game
-            if (hasFinished)
+            if (hasFinished){
                 console.log("Congrats! You have finished the puzzle!")
-            //console.log(selectedId)
-            //console.log(hasSelected)
-            //console.log(emptySpaceIndex)
-            
-        })
+                cleanUpResources()
+                drawWinScreen()
+            }
 
-        function drawUnselect(x, y, index) {
+            if(redrawPuzzle) //lazy way of fixing stroking color mixing problem 
+                drawPuzzle() //TODO: only redraw the necessary parts
+        }
+
+        function drawWinScreen() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height) //clears canvas
+            drawBg()
+            ctx.drawImage(img, 0, 0, img.width, img.height, CANVAS_X_OFFSET , CANVAS_Y_OFFSET, canvas.width - CANVAS_X_OFFSET * 2, canvas.height - CANVAS_Y_OFFSET * 2) //draws entire image   
+        }
+        function cleanUpResources() {
+            canvas.removeEventListener("mousedown", gameLogic)
+        }
+        function drawUnselect(x, y, index) { //Please help me
             drawOutLine(x, y, BACKGROUND_COLOR)
             with (piecesList[index])
                 drawEmptySpace(puzzleBoardX, puzzleBoardY, EMPTY_SPACE_COLOR_UNSELECTED)
@@ -213,10 +201,13 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
             ctx.fillRect(x, y, CELLWIDTH, CELLHEIGHT)
         }
         function drawOutLine(x, y, color) {
-            ctx.fillStyle = color
+            ctx.strokeStyle = color
             ctx.strokeRect(x, y, CELLWIDTH, CELLHEIGHT)
         }
-
+        function drawBg(){
+            ctx.fillStyle = BACKGROUND_COLOR
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+        }
     }
 }
 
