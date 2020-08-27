@@ -114,9 +114,9 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 hasSelectedAnyPieces = true
             var emptySpaceIndex = piecesList.findIndex(piece => piece.isEmptySpace)
 
-            console.log(hasSelectedAnyPieces)
-            console.log(selectedId)
-            console.log(emptySpaceIndex)
+            //console.log(hasSelectedAnyPieces)
+            //console.log(selectedId)
+            //console.log(emptySpaceIndex)
 
             for (var i = 0; i < piecesList.length; i++) {
                 //Check for adjacent empty space
@@ -138,20 +138,19 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                         piecesList[selectedId].hasSelected = false
 
                         //TODO: revert to unselected state + swap
-                        with (piecesList[selectedId])
-                            drawUnselect(puzzleBoardX, puzzleBoardY)
-
-                        console.log(piecesList[i])
-                        console.log(piecesList[selectedId])
+                        //with (piecesList[selectedId])
+                            //rawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
+                        //console.log(piecesList[i])
+                        //console.log(piecesList[selectedId])
 
                         let t = piecesList[i]
                         piecesList[i] = piecesList[selectedId]
                         piecesList[selectedId] = t
 
-                        console.log(piecesList[i])
-                        console.log(piecesList[selectedId])
+                        //console.log(piecesList[i])
+                        //console.log(piecesList[selectedId])
                         
-                        drawPuzzle()
+                        drawPuzzle() //redraw puzzle
                         hasAnyConditionMet = true
                     } else if ((mouseY >= puzzleBoardY && mouseY <= puzzleBoardY + CELLHEIGHT) && (mouseX >= puzzleBoardX && mouseX <= puzzleBoardX + CELLWIDTH)) { //check if selected this piece (not empty space)             
                         if (!hasSelectedAnyPieces) {
@@ -169,8 +168,8 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
 
                             //TODO: revert to unselected state
                             with (piecesList[selectedId])
-                                drawUnselect(puzzleBoardX, puzzleBoardY)
-                            selectedId = -1
+                                drawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
+                            //selectedId = -1
                         }
                         hasAnyConditionMet = true
                     }
@@ -180,9 +179,11 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
             }
             if (!hasAnyConditionMet && hasSelectedAnyPieces) {
                 console.log("unselected box2")
+                piecesList[selectedId].hasSelected = false
+
                 //TODO: revert to unselected state
                 with (piecesList[selectedId])
-                    drawUnselect(puzzleBoardX, puzzleBoardY)
+                    drawUnselect(puzzleBoardX, puzzleBoardY, emptySpaceIndex)
             }
 
             //TODO: Check if finished puzzle
@@ -199,13 +200,14 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
             //console.log(selectedId)
             //console.log(hasSelected)
             //console.log(emptySpaceIndex)
-            function drawUnselect(x, y) {
-                drawOutLine(x, y, BACKGROUND_COLOR)
-                with (piecesList[emptySpaceIndex])
-                    drawEmptySpace(puzzleBoardX, puzzleBoardY, EMPTY_SPACE_COLOR_UNSELECTED)
-            }
+            
         })
 
+        function drawUnselect(x, y, index) {
+            drawOutLine(x, y, BACKGROUND_COLOR)
+            with (piecesList[index])
+                drawEmptySpace(puzzleBoardX, puzzleBoardY, EMPTY_SPACE_COLOR_UNSELECTED)
+        }
         function drawEmptySpace(x, y, color) {
             ctx.fillStyle = color
             ctx.fillRect(x, y, CELLWIDTH, CELLHEIGHT)
