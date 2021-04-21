@@ -1,16 +1,16 @@
 //TODO: refactor code
-const { ipcRenderer } = require('electron')
-
-const CANVAS_MAX_WIDTH = 400
-const CANVAS_MAX_HEIGHT = 600
-const CANVAS_X_OFFSET = 10
-const CANVAS_Y_OFFSET = 10
-
-var canvas = document.getElementById("game_container") //gets canvas
-var ctx = canvas.getContext("2d")
-var piecesList = new Array() //create array for puzzle pieces (partitions of image)
+const { ipcRenderer, ipcMain } = require('electron')
 
 function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an image
+    var canvas = document.getElementById("game_container") //gets canvas
+    var ctx = canvas.getContext("2d")
+
+    const CANVAS_MAX_WIDTH = 400
+    const CANVAS_MAX_HEIGHT = 600
+    const CANVAS_X_OFFSET = 10
+    const CANVAS_Y_OFFSET = 10
+
+    var piecesList = new Array() //create array for puzzle pieces (partitions of image)
     var length = difficulty + 3 // 3x3 4x4 5x5 ez to hard
 
     var img = new Image()
@@ -177,6 +177,8 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
                 console.log("Congrats! You have finished the puzzle!")
                 cleanUpResources()
                 drawWinScreen()
+                ipcRenderer.send("win");
+                return 
             }
 
             if(redrawPuzzle) //lazy way of fixing stroking color mixing problem 
@@ -210,8 +212,7 @@ function generatePuzzle(imgPath, difficulty) { //generates the puzzle from an im
         }
     }
 }
-
-ipcRenderer.send("genPuzzle", "puzzle generation ready")
+ipcRenderer.send("genPuzzleLoaded");
 ipcRenderer.on("puzzleArgs", (event, path, diff) => {
     console.log("Generating puzzle with args:\n" + path + '\n' + diff)
     generatePuzzle(path, diff)
